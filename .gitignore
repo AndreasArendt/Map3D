@@ -1,3 +1,4 @@
 *.osm
 *.obj
 *.obj.mtl
+.venv
