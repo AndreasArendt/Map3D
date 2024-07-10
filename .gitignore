@@ -3,3 +3,5 @@
 *.obj.mtl
 .venv
 /src/meta.json
+cache
+*__pycache__*
