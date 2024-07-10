@@ -2,3 +2,4 @@
 *.obj
 *.obj.mtl
 .venv
+/src/meta.json
