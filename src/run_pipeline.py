@@ -2,7 +2,7 @@ import os
 import json
 from query_tile import query_tile
 from scale_obj import scale_obj
-from cut_mesh import cut_mesh, add_square_to_mesh, detect_zero_height_vertices
+from mesh import *
 
 with open('src/meta.json', 'r', -1, 'utf-8') as f:
     meta = json.load(f)
@@ -14,13 +14,11 @@ fpath = os.path.normpath(fpath)
 # convert tile
 os.system(os.path.normpath(f"./src/conv_osm.bat ") + fpath)
 
-#cut mesh
-input_obj_path = cut_mesh("data/test.obj", 500)
 
-# Scale the OBJ file
-output_path = scale_obj(input_obj_path, 170)
+mesh = loadMesh("data/test.obj")                # load
+mesh = intersect_mesh_with_cube(mesh, 500)      # intersect - cut out center
+mesh = scale_obj(mesh, 170)                     # scale it 1o 170x170 mm
+mesh = add_square_to_mesh(mesh, 170)            # add build plate
 
-# detect_zero_height_vertices(output_path)
-
-# add square
-add_square_to_mesh("data/scaled_file.obj", 170)
+# save mesh
+saveMesh(mesh, "data/printable.obj")

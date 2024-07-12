@@ -1,24 +1,35 @@
 import trimesh
 import numpy as np
 
-out_file = 'data/filtered.obj'
-
-def cut_mesh(obj_file, radius):
-    """
-    Cuts a mesh from the provided obj file within a specified radius from the center
-    and translates it so that the vertices start at (0, 0, 0).
-
-    Parameters:
-    obj_file (str): Path to the input OBJ file.
-    radius (float): Radius within which to keep the mesh triangles.
-    out_file (str): Path to the output OBJ file.
-
-    Returns:
-    str: Path to the output OBJ file.
-    """
-    # Load the mesh
+def loadMesh(obj_file):
     mesh = trimesh.load(obj_file, force='mesh')
 
+def saveMesh(mesh, fpath):
+    mesh.export(fpath)
+
+def intersect_mesh_with_cube(mesh, cube_size):
+    # Define the cube as a mesh
+    cube = trimesh.creation.box(extents=(cube_size, cube_size, cube_size))
+
+    # Ensure the cube is centered at the origin
+    cube.apply_translation(-cube.bounding_box.center_mass)
+
+    # Perform the boolean intersection
+    intersected_mesh = mesh.intersection(cube)
+
+    # Check if the resulting mesh is empty
+    if intersected_mesh.is_empty:
+        raise ValueError("The intersection resulted in an empty mesh.")
+
+    # Calculate the minimum vertex coordinates
+    min_vertex = intersected_mesh.vertices.min(axis=0)
+
+    # Translate the mesh so that the minimum vertex is at the origin
+    intersected_mesh.vertices -= min_vertex
+
+    return intersected_mesh
+
+def cut_mesh(mesh, radius):    
     # Assuming center is defined as a numpy array [x, y, z]
     center = np.array([0, 0, 0])  # Example center point
 
@@ -45,21 +56,9 @@ def cut_mesh(obj_file, radius):
     # Translate the mesh so that the minimum vertex is at the origin
     filtered_mesh.vertices -= min_vertex
 
-    # Save the new mesh
-    filtered_mesh.export(out_file)
+    return filtered_mesh
 
-    return out_file
-
-def detect_zero_height_vertices(obj_file):
-    """
-    Detects vertices with a height (z-coordinate) of 0 in the mesh.
-
-    Parameters:
-    obj_file (str): Path to the input OBJ file.
-
-    Returns:
-    list: Indices of vertices with a z-coordinate of 0.
-    """
+def detect_zero_height_vertices(mesh):
     # Load the mesh
     # mesh = trimesh.load(obj_file, force='mesh')
 
@@ -76,9 +75,7 @@ def detect_zero_height_vertices(obj_file):
 
     return zero_height_indices.tolist()
 
-def add_square_to_mesh(obj_file, radius):
-    mesh = trimesh.load(obj_file, force='mesh')
-
+def add_square_to_mesh(mesh, radius):    
     thickness = 2
 
     # Translate the filtered mesh vertices by 2mm along the z-axis
@@ -89,9 +86,8 @@ def add_square_to_mesh(obj_file, radius):
 
     # Combine the filtered mesh and the square mesh
     combined_mesh = trimesh.util.concatenate([mesh, square_mesh])
-    combined_mesh.export(out_file)
-
-    return out_file
+    
+    return mesh
 
 
 def create_square(width, height, depth):
