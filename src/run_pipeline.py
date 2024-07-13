@@ -14,11 +14,21 @@ fpath = os.path.normpath(fpath)
 # convert tile
 os.system(os.path.normpath(f"./src/conv_osm.bat ") + fpath)
 
+mesh = loadMesh("data/tile.obj")                # load
 
-mesh = loadMesh("data/test.obj")                # load
-mesh = intersect_mesh_with_cube(mesh, 500)      # intersect - cut out center
-mesh = scale_obj(mesh, 170)                     # scale it 1o 170x170 mm
-mesh = add_square_to_mesh(mesh, 170)            # add build plate
+mesh = add_square_to_mesh(mesh, 500, 2)         # add build plate
+rotateX(mesh, 90)
+mesh = cut_mesh(mesh, 500, 500, 500)
+
+for m in mesh.vertices:
+    if m[2] < 0:
+        m[2] = 0
+
+mesh.fix_normals()
+mesh.merge_vertices()
+mesh.fill_holes()
 
 # save mesh
 saveMesh(mesh, "data/printable.obj")
+
+scale_obj("data/printable.obj", 170)                     # scale it 1o 170x170 mm
